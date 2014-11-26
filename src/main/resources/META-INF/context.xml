@@ -53,7 +53,7 @@
 	</beans>
 
 	<beans profile="default">
-		<mongo:db-factory uri="mongodb://${env.OPENSHIFT_MONGODB_DB_HOST}:${env.OPENSHIFT_MONGODB_DB_PORT}/lor" />
+		<mongo:db-factory uri="mongodb://admin:FkPsm9yhRbtq@127.4.74.2:27017/lor" />
 
 	</beans>
 </beans>
