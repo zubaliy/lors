@@ -57,10 +57,6 @@ public class ActivityLogRepo {
 		}
 	}
 
-	public List<DBObject> getActivityLogs() {
-		return mongoTemplate.getCollection(Config.MONGO_COLLECTION_NAME).find().toArray();
-	}
-
 	public AggregationOutput getStatsForNDays(final Integer value) {
 		log.info(String.format("Get stats for last %s days ", value));
 		final Date date = Util.convertToDate(Util.createZeroToday().minusDays(value));

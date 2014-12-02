@@ -50,12 +50,6 @@ public class LifeOnRoadImpl implements LifeOnRoadInterface {
 	}
 
 	@Override
-	@RequestMapping(value = "/get/activitylogs")
-	public List<DBObject> getActivityLogs() {
-		return activityLogRepo.getActivityLogs();
-	}
-
-	@Override
 	@RequestMapping(value = "/get/activitylogs/{period}/{value}")
 	public List<be.ordina.zubaliy.converter.out.ActivityLog> getActivityLogs(@PathVariable final String period,
 			@PathVariable final Integer value) {
