@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Data;
 import lombok.extern.log4j.Log4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,11 @@ import com.mongodb.DBObject;
  */
 @Repository
 @Log4j
+@Data
 public class ActivityLogRepo {
 
 	@Autowired
-	MongoTemplate mongoTemplate;
+	private MongoTemplate mongoTemplate;
 
 	public void insertActivityLogRow(final List<Map<String, Object>> dataList) {
 		for (final Map<String, Object> data : dataList) {
@@ -79,9 +81,9 @@ public class ActivityLogRepo {
 
 		final List<DBObject> pipeline = Arrays.asList(match, group);
 
-		log.info(match);
-		log.info(group);
-		log.info(pipeline);
+		log.debug(match);
+		log.debug(group);
+		log.debug(pipeline);
 		return mongoTemplate.getCollection(Config.MONGO_COLLECTION_NAME).aggregate(pipeline);
 	}
 
