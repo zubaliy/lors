@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -23,15 +22,16 @@ import be.ordina.zubaliy.util.Util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mongodb.AggregationOutput;
 import com.mongodb.DB;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
 
 @RunWith(MockitoJUnitRunner.class)
-@Log4j
-public class ActivityLogRepoTest {
+public class ActivityLogRepoIntegrationTest {
 	static final String DB_NAME = "test";
 	static final String DB_COL_NAME = Config.MONGO_COLLECTION_NAME;
 
@@ -40,11 +40,10 @@ public class ActivityLogRepoTest {
 	DB db;
 
 	ActivityLogRepo repo;
-	List<ActivityLog> logs;
-
-	int size = 31;
-
 	MongoTemplate mongoTemplate;
+
+	List<ActivityLog> logs;
+	int size = 31;
 
 	Gson gson;
 	String json;
@@ -89,15 +88,24 @@ public class ActivityLogRepoTest {
 
 	@Test
 	public void testInsertActivityLogJson() {
-		Assert.assertEquals(size, repo.getActivityLogs().size());
+		Assert.assertEquals(size, repo.getMongoTemplate().getCollection(DB_COL_NAME).find().size());
 	}
 
 	@Test
 	public void testGetActivityLogs() {
 		final Date date = Util.convertToDate(LocalDate.of(2014, 1, 31));
 		final List<ActivityLog> logs = repo.findLogsByDate(date);
-		//logs.stream().forEach(log::info);
+
 		Assert.assertEquals(1, logs.size());
+	}
+
+	@Test
+	public void testGetActivityStats(){
+		final Date date = Util.convertToDate(LocalDate.of(2014, 1, 30));
+		final AggregationOutput output = repo.getStatsFrom(date);
+		final DBObject result = output.results().iterator().next();
+
+		Assert.assertEquals(2*60*60*1000, result.get("total"));
 	}
 
 }
