@@ -64,7 +64,7 @@ public class LifeOnRoadImpl implements LifeOnRoadInterface {
 		final Iterable<DBObject> iterator = activityLogRepo.getStats(period, value).results();
 		// take the first element only
 		final DBObject result = iterator.iterator().next();
-		ConverterOut.adjustAggResult(result, period, value.toString());
+		ConverterOut.adjustAggregationResult(result, period, value.toString());
 
 		return result;
 	}
