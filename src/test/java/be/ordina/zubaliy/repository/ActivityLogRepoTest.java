@@ -1,11 +1,13 @@
 package be.ordina.zubaliy.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -28,6 +30,7 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
 
 @RunWith(MockitoJUnitRunner.class)
+@Log4j
 public class ActivityLogRepoTest {
 	static final String DB_NAME = "test";
 	static final String DB_COL_NAME = Config.MONGO_COLLECTION_NAME;
@@ -71,7 +74,10 @@ public class ActivityLogRepoTest {
 		}
 
 		gson = new GsonBuilder().setDateFormat(Config.sdf.toPattern()).create();
+
 		json = gson.toJson(logs).toString();
+
+		repo.insertActivityLogJson(json);
 	}
 
 	@After
@@ -83,8 +89,15 @@ public class ActivityLogRepoTest {
 
 	@Test
 	public void testInsertActivityLogJson() {
-		repo.insertActivityLogJson(json);
 		Assert.assertEquals(size, repo.getActivityLogs().size());
+	}
+
+	@Test
+	public void testGetActivityLogs() {
+		final Date date = Util.convertToDate(LocalDate.of(2014, 1, 31));
+		final List<ActivityLog> logs = repo.findLogsByDate(date);
+		//logs.stream().forEach(log::info);
+		Assert.assertEquals(1, logs.size());
 	}
 
 }
