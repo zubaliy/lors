@@ -6,7 +6,6 @@ import javax.annotation.PostConstruct;
 
 import lombok.extern.log4j.Log4j;
 
-import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
@@ -33,11 +32,6 @@ public class LifeOnRoadImpl implements LifeOnRoadInterface {
 	@Autowired
 	MongoTemplate mongoTemplate;
 
-	@Autowired
-	Mapper mapper;
-
-
-
 	@PostConstruct
 	public void init() {}
 
@@ -47,12 +41,6 @@ public class LifeOnRoadImpl implements LifeOnRoadInterface {
 		log.debug(json);
 		activityLogRepo.insertActivityLogJson(json);
 		return json;
-	}
-
-	@Override
-	@RequestMapping(value = "/get/activitylogs")
-	public List<DBObject> getActivityLogs() {
-		return activityLogRepo.getActivityLogs();
 	}
 
 	@Override
@@ -70,7 +58,7 @@ public class LifeOnRoadImpl implements LifeOnRoadInterface {
 		final Iterable<DBObject> iterator = activityLogRepo.getStats(period, value).results();
 		// take the first element only
 		final DBObject result = iterator.iterator().next();
-		ConverterOut.adjustAggResult(result, period, value.toString());
+		ConverterOut.adjustAggregationResult(result, period, value.toString());
 
 		return result;
 	}
