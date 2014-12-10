@@ -27,15 +27,28 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
+import de.flapdoodle.embed.mongo.Command;
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.ArtifactStoreBuilder;
+import de.flapdoodle.embed.mongo.config.DownloadConfigBuilder;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
+import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.extract.UserTempNaming;
+import de.flapdoodle.embed.process.runtime.Network;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActivityLogRepoIntegrationTest {
 	static final String DB_NAME = "test";
 	static final String DB_COL_NAME = Config.MONGO_COLLECTION_NAME;
 
-	MongodForTestsFactory factory;
+	static MongodStarter runtime = null;
+	MongodExecutable mongodExecutable = null;
+	static final int MONGO_PORT = 12345;
 	MongoClient mongo;
 	DB db;
 
@@ -52,8 +65,31 @@ public class ActivityLogRepoIntegrationTest {
 	@Before
 	public void setup() {
 		// set mongo
-		factory = MongodForTestsFactory.with(Version.Main.PRODUCTION);
-		mongo = factory.newMongo();
+		if (runtime == null) {
+	
+		    Command command = Command.MongoD;
+	
+		    IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
+		        .defaults(command)
+		        .artifactStore(new ArtifactStoreBuilder()
+		            .defaults(command)
+		            .download(new DownloadConfigBuilder()
+		            .defaultsForCommand(command))
+		            .executableNaming(new UserTempNaming()))
+		        .build();
+		
+		    runtime = MongodStarter.getInstance(runtimeConfig);
+		}
+	    IMongodConfig mongodConfig = new MongodConfigBuilder()
+        .version(Version.Main.PRODUCTION)
+        .net(new Net(MONGO_PORT, Network.localhostIsIPv6()))
+        .build();
+
+	    mongodExecutable = runtime.prepare(mongodConfig);
+        mongodExecutable.start();
+
+        MongoClient mongo = new MongoClient("localhost", MONGO_PORT);
+
 		db = mongo.getDB(DB_NAME);
 
 		// set repo
@@ -81,8 +117,9 @@ public class ActivityLogRepoIntegrationTest {
 
 	@After
 	public void teardown() {
-		if (factory != null) {
-			factory.shutdown();
+		if (mongodExecutable != null) {
+			mongodExecutable.stop();
+			mongodExecutable = null;
 		}
 	}
 
