@@ -36,7 +36,7 @@ public class ConverterOut {
 		return converted;
 	}
 
-	public static void adjustAggResult(final DBObject result, final String period, final String value){
+	public static void adjustAggregationResult(final DBObject result, final String period, final String value){
 		final int total = (int) result.get("total");
 		result.removeField("_id");
 		result.put("total", DurationFormatUtils.formatDurationWords(total, true, true));

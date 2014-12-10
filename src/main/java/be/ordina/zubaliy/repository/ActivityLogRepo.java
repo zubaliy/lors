@@ -1,14 +1,11 @@
 package be.ordina.zubaliy.repository;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Data;
 import lombok.extern.log4j.Log4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import be.ordina.zubaliy.config.Config;
 import be.ordina.zubaliy.entity.ActivityLog;
+import be.ordina.zubaliy.util.Util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -37,10 +35,11 @@ import com.mongodb.DBObject;
  */
 @Repository
 @Log4j
+@Data
 public class ActivityLogRepo {
 
 	@Autowired
-	MongoTemplate mongoTemplate;
+	private MongoTemplate mongoTemplate;
 
 	public void insertActivityLogRow(final List<Map<String, Object>> dataList) {
 		for (final Map<String, Object> data : dataList) {
@@ -58,18 +57,20 @@ public class ActivityLogRepo {
 		}
 	}
 
-	public List<DBObject> getActivityLogs() {
-		return mongoTemplate.getCollection(Config.MONGO_COLLECTION_NAME).find().toArray();
-	}
-
 	public AggregationOutput getStatsForNDays(final Integer value) {
 		log.info(String.format("Get stats for last %s days ", value));
-		final Date date = convertToDate(createZeroToday().minusDays(value));
+		final Date date = Util.convertToDate(Util.createZeroToday().minusDays(value));
 
 		return getStatsFrom(date);
 	}
 
-	private AggregationOutput getStatsFrom(final Date date) {
+	/**
+	 * Get total hours from specific date until now
+	 *
+	 * @param date the
+	 * @return
+	 */
+	public AggregationOutput getStatsFrom(final Date date) {
 		final DBObject match = new BasicDBObject("$match", new BasicDBObject("connected", new BasicDBObject("$gte",
 				date)));
 
@@ -79,19 +80,19 @@ public class ActivityLogRepo {
 
 		final List<DBObject> pipeline = Arrays.asList(match, group);
 
-		log.info(match);
-		log.info(group);
-		log.info(pipeline);
+		log.debug(match);
+		log.debug(group);
+		log.debug(pipeline);
 		return mongoTemplate.getCollection(Config.MONGO_COLLECTION_NAME).aggregate(pipeline);
 	}
 
 	/**
-	 * Find logs from specific date
+	 * Find logs from specific date until now
 	 *
 	 * @param date the
 	 * @return
 	 */
-	private List<ActivityLog> findLogsByDate(final Date date) {
+	public List<ActivityLog> findLogsByDate(final Date date) {
 		final Query query = new Query();
 		final Criteria criteria = Criteria.where("connected").gte(date);
 
@@ -105,42 +106,20 @@ public class ActivityLogRepo {
 		return result;
 	}
 
-	private Date convertToDate(final LocalDate localdate) {
-		return Date.from(localdate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-	}
-
-	private LocalDate createZeroToday() {
-		return LocalDate.now();
-	}
-
-	private LocalDate createZeroThisWeek() {
-		return LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-	}
-
-	private LocalDate createZeroThisMonth() {
-		final LocalDate now = LocalDate.now();
-		return now.minusDays(now.getDayOfMonth() + 1);
-	}
-
-	private LocalDate createZeroThisYear() {
-		final LocalDate now = LocalDate.now();
-		return now.minusDays(now.getDayOfYear() + 1);
-	}
-
 	public AggregationOutput getStats(final String period, final Integer value) {
 		AggregationOutput result = null;
 		switch (period) {
 		case "days":
-			result = getStatsFrom(convertToDate(createZeroToday().minusDays(value)));
+			result = getStatsFrom(Util.convertToDate(Util.createZeroToday().minusDays(value)));
 			break;
 		case "weeks":
-			result = getStatsFrom(convertToDate(createZeroThisWeek().minusWeeks(value)));
+			result = getStatsFrom(Util.convertToDate(Util.createZeroThisWeek().minusWeeks(value)));
 			break;
 		case "months":
-			result = getStatsFrom(convertToDate(createZeroThisMonth().minusMonths(value)));
+			result = getStatsFrom(Util.convertToDate(Util.createZeroThisMonth().minusMonths(value)));
 			break;
 		case "years":
-			result = getStatsFrom(convertToDate(createZeroThisYear().minusMonths(value * 12)));
+			result = getStatsFrom(Util.convertToDate(Util.createZeroThisYear().minusMonths(value * 12)));
 			break;
 		default:
 			break;
@@ -153,16 +132,16 @@ public class ActivityLogRepo {
 		List<ActivityLog> result = null;
 		switch (period) {
 		case "days":
-			result = findLogsByDate(convertToDate(createZeroToday().minusDays(value)));
+			result = findLogsByDate(Util.convertToDate(Util.createZeroToday().minusDays(value)));
 			break;
 		case "weeks":
-			result = findLogsByDate(convertToDate(createZeroThisWeek().minusWeeks(value)));
+			result = findLogsByDate(Util.convertToDate(Util.createZeroThisWeek().minusWeeks(value)));
 			break;
 		case "months":
-			result = findLogsByDate(convertToDate(createZeroThisMonth().minusMonths(value)));
+			result = findLogsByDate(Util.convertToDate(Util.createZeroThisMonth().minusMonths(value)));
 			break;
 		case "years":
-			result = findLogsByDate(convertToDate(createZeroThisYear().minusMonths(value * 12)));
+			result = findLogsByDate(Util.convertToDate(Util.createZeroThisYear().minusMonths(value * 12)));
 			break;
 		default:
 			break;
